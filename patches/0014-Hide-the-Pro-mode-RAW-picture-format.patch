@@ -1,0 +1,88 @@
+From 87c2ac5fda69d77797f34acd77190797d403a75b Mon Sep 17 00:00:00 2001
+From: Fakhri Adi Saputra <fakhriadisaputra15@gmail.com>
+Date: Tue, 20 Oct 2026 05:58:26 +0700
+Subject: [PATCH] Hide the Pro mode RAW picture format
+
+With RAW (or Ultra RAW) picked, ProModuleDevice opens the
+MANUAL_JPEG_RAW session (0x900d). On onyx the HAL's MIVI node
+manualrawsnapshot_jpegrAggrInstance never gets its 4096x3072 output
+buffer ("snapshot: get_buffer_timeout" after 10 s), so no DNG is
+written and the app saves the 1440x1080 preview frame as the photo.
+With JPEG it opens SESSION_OPERATION_MODE_ALGO_UP_MANUAL (0x9008) and
+saves the full 3072x4534 shot.
+
+ComponentConfigRaw (c0/Y): isSupportMode() and isSwitchOn() return
+false, so the RAW item is gone from the Pro top bar and a RAW value
+already saved in the prefs no longer selects the broken session.
+---
+ smali/c0/Y.smali | 46 +++-------------------------------------------
+ 1 file changed, 3 insertions(+), 43 deletions(-)
+
+diff --git a/smali/c0/Y.smali b/smali/c0/Y.smali
+index 4c39cd3..044d179 100644
+--- a/smali/c0/Y.smali
++++ b/smali/c0/Y.smali
+@@ -552,57 +552,17 @@
+ .method public final isSupportMode(I)Z
+     .locals 0
+ 
+-    const/16 p0, 0xa7
+-
+-    if-eq p1, p0, :cond_0
+-
+     const/4 p0, 0x0
+ 
+     return p0
+-
+-    :cond_0
+-    const/4 p0, 0x1
+-
+-    return p0
+ .end method
+ 
+ .method public final isSwitchOn(I)Z
+-    .locals 2
+-
+-    const/16 v0, 0xa7
+-
+-    const/4 v1, 0x0
+-
+-    if-eq p1, v0, :cond_0
+-
+-    return v1
+-
+-    :cond_0
+-    invoke-virtual {p0, p1}, Lc0/Y;->getComponentValue(I)Ljava/lang/String;
+-
+-    move-result-object p0
+-
+-    const-string p1, "RAW"
+-
+-    invoke-virtual {p1, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+-
+-    move-result p1
+-
+-    if-nez p1, :cond_1
+-
+-    const-string p1, "Ultra RAW"
+-
+-    invoke-virtual {p1, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+-
+-    move-result p0
+-
+-    if-eqz p0, :cond_2
++    .locals 0
+ 
+-    :cond_1
+-    const/4 v1, 0x1
++    const/4 p0, 0x0
+ 
+-    :cond_2
+-    return v1
++    return p0
+ .end method
+ 
+ .method public final j(I)Ljava/lang/String;
+-- 
+2.47.3
+
