@@ -1,0 +1,78 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Fakhri Adi Saputra <fakhriadisaputra15@gmail.com>
+Date: Wed, 11 Nov 2026 18:50:00 +0700
+Subject: [PATCH] Record 4K60 at 100 Mbps
+
+The recorder takes its bitrate from the per device table in
+device_common (p0, and o0 for HDR10 HEVC), keyed "quality:fps:codec:".
+It only has 30 fps rows (HEVC 4K30 38.5 Mbps), so 4K60 falls back to
+the 2160p media profile, 50 Mbps for H.264 and HEVC alike. The onyx
+class does not override either table.
+
+Add "8:60::" (H.264) and "8:60:5:" (HEVC) with videoBitRate 100000000
+to both tables. 4K30 and the other sizes keep their rates. The
+VideoEncoderCap in media_profiles has to allow 100 Mbps as well, or
+StagefrightRecorder clips it back to the cap.
+---
+ smali_classes3/device_common.smali | 38 ++++++++++++++++++++++++++++++
+ 1 file changed, 38 insertions(+)
+
+diff --git a/smali_classes3/device_common.smali b/smali_classes3/device_common.smali
+index 61efecf..a363475 100644
+--- a/smali_classes3/device_common.smali
++++ b/smali_classes3/device_common.smali
+@@ -3868,6 +3868,25 @@
+ 
+     invoke-virtual {p0, v1, v0}, Ljava/util/HashMap;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+ 
++    # onyx: 4K60 at 100 Mbps for H.264 ("8:60::") and HEVC ("8:60:5:"), the stock table only has 30 fps
++    new-instance v0, Ljava/util/HashMap;
++
++    invoke-direct {v0}, Ljava/util/HashMap;-><init>()V
++
++    const-string v1, "videoBitRate"
++
++    const-string v2, "100000000"
++
++    invoke-virtual {v0, v1, v2}, Ljava/util/HashMap;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
++
++    const-string v1, "8:60::"
++
++    invoke-virtual {p0, v1, v0}, Ljava/util/HashMap;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
++
++    const-string v1, "8:60:5:"
++
++    invoke-virtual {p0, v1, v0}, Ljava/util/HashMap;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
++
+     return-object p0
+ .end method
+ 
+@@ -4144,6 +4163,25 @@
+ 
+     invoke-virtual {p0, v1, v0}, Ljava/util/HashMap;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+ 
++    # onyx: 4K60 at 100 Mbps for H.264 ("8:60::") and HEVC ("8:60:5:"), the stock table only has 30 fps
++    new-instance v0, Ljava/util/HashMap;
++
++    invoke-direct {v0}, Ljava/util/HashMap;-><init>()V
++
++    const-string v1, "videoBitRate"
++
++    const-string v2, "100000000"
++
++    invoke-virtual {v0, v1, v2}, Ljava/util/HashMap;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
++
++    const-string v1, "8:60::"
++
++    invoke-virtual {p0, v1, v0}, Ljava/util/HashMap;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
++
++    const-string v1, "8:60:5:"
++
++    invoke-virtual {p0, v1, v0}, Ljava/util/HashMap;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
++
+     return-object p0
+ .end method
+ 
+-- 
+2.43.0
+
